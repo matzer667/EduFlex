@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlex - Générateur de Planning</title>
+</head>
+<body>
+    <h1>EduFlex - Configuration du Planning</h1>
+    
+    <form id="planningForm">
+        <div>
+            <label>Heure de début de journée (0-23) :</label>
+            <input type="number" id="startHour" min="0" max="23" value="8" required>
+        </div>
+        
+        <div>
+            <label>Heure de fin de journée (0-23) :</label>
+            <input type="number" id="endHour" min="1" max="24" value="17" required>
+        </div>
+        
+        <div>
+            <label>Nombre de professeurs :</label>
+            <input type="number" id="nbProfs" min="1" value="3" required>
+        </div>
+        
+        <div>
+            <label>Nombre de classes :</label>
+            <input type="number" id="nbClasses" min="1" value="5" required>
+        </div>
+        
+        <button type="submit">Générer le Planning</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
