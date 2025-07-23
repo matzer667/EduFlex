@@ -10,62 +10,107 @@
     <h1>EduFlex - Configuration du Planning</h1>
     
     <form id="planningForm">
-        <div>
-            <label>Heure de début de journée (0-23) :</label>
-            <input type="number" id="startHour" min="0" max="23" value="8" required>
+        <div class="section-container">
+            <div class="section-header" onclick="toggleSection('horaires')">
+                <h3>📅 Créneaux horaires</h3>
+                <span class="arrow" id="arrow-horaires">▼</span>
+            </div>
+            <div class="section-content" id="horaires">
+                <div>
+                    <label>Heure de début de journée :</label>
+                    <div class="time-selector">
+                        <select id="startHourSelect" required>
+                        </select>
+                        <span class="time-separator">:</span>
+                        <select id="startMinuteSelect" required>
+                            <option value="00">00</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label>Heure de fin de journée :</label>
+                    <div class="time-selector">
+                        <select id="endHourSelect" required>
+                        </select>
+                        <span class="time-separator">:</span>
+                        <select id="endMinuteSelect" required>
+                            <option value="00">00</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="hidden" id="startHour" value="8.00">
+                <input type="hidden" id="endHour" value="17.00">
+            </div>
+        </div>
+
+        <div class="section-container">
+            <div class="section-header" onclick="toggleSection('classes')">
+                <h3>🎓 Organisation des classes</h3>
+                <span class="arrow" id="arrow-classes">▼</span>
+            </div>
+            <div class="section-content" id="classes">
+                <div>
+                    <label>Nombre de classes :</label>
+                    <input type="number" id="nbClasses" min="1" value="5" required>
+                </div>
+                <div>
+                    <label>Heures de cours par classe/semaine :</label>
+                    <input type="number" id="heuresParSemaine" min="1" max="40" value="25" required>
+                </div>
+                <div>
+                    <label>Effectif minimum par classe :</label>
+                    <input type="number" id="effectifMin" min="10" max="50" value="20" required>
+                </div>
+                <div>
+                    <label>Effectif maximum par classe :</label>
+                    <input type="number" id="effectifMax" min="10" max="50" value="35" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-container">
+            <div class="section-header" onclick="toggleSection('professeurs')">
+                <h3>👨‍🏫 Ressources professeurs</h3>
+                <span class="arrow" id="arrow-professeurs">▼</span>
+            </div>
+            <div class="section-content" id="professeurs">
+                <div>
+                    <label>Nombre de professeurs :</label>
+                    <input type="number" id="nbProfs" min="1" value="3" required>
+                </div>
+                <div id="profMatieresContainer" style="grid-column: 1 / -1;">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-container">
+            <div class="section-header" onclick="toggleSection('salles')">
+                <h3>🏫 Salles et équipements</h3>
+                <span class="arrow" id="arrow-salles">▼</span>
+            </div>
+            <div class="section-content" id="salles">
+                <div>
+                    <label>Nombre de salles :</label>
+                    <input type="number" id="nbSalles" min="1" value="5" required>
+                </div>
+                <div>
+                    <label>Capacité minimum des salles :</label>
+                    <input type="number" id="capaciteMin" min="15" max="100" value="25" required>
+                </div>
+                <div>
+                    <label>Capacité maximum des salles :</label>
+                    <input type="number" id="capaciteMax" min="15" max="100" value="40" required>
+                </div>
+            </div>
         </div>
         
-        <div>
-            <label>Heure de fin de journée (0-23) :</label>
-            <input type="number" id="endHour" min="1" max="24" value="17" required>
-        </div>
-        
-        <div>
-            <label>Nombre de professeurs :</label>
-            <input type="number" id="nbProfs" min="1" value="3" required>
-        </div>
-        
-        <div>
-            <label>Nombre de classes :</label>
-            <input type="number" id="nbClasses" min="1" value="5" required>
-        </div>
-        
-        <div>
-            <label>Nombre d'heures de cours par classe par semaine :</label>
-            <input type="number" id="heuresParSemaine" min="1" max="40" value="25" required>
-        </div>
-        
-        <div>
-            <label>Nombre de salles :</label>
-            <input type="number" id="nbSalles" min="1" value="5" required>
-        </div>
-        
-        <div>
-            <label>Effectif minimum par classe :</label>
-            <input type="number" id="effectifMin" min="10" max="50" value="20" required>
-        </div>
-        
-        <div>
-            <label>Effectif maximum par classe :</label>
-            <input type="number" id="effectifMax" min="10" max="50" value="35" required>
-        </div>
-        
-        <div>
-            <label>Capacité minimum des salles :</label>
-            <input type="number" id="capaciteMin" min="15" max="100" value="25" required>
-        </div>
-        
-        <div>
-            <label>Capacité maximum des salles :</label>
-            <input type="number" id="capaciteMax" min="15" max="100" value="40" required>
-        </div>
-        
-        <div>
-            <label>Matières (séparées par des virgules) :</label>
-            <input type="text" id="matieres" value="Mathématiques,Français,Histoire,Sciences,Anglais,Sport" placeholder="Maths,Français,Sciences...">
-        </div>
-        
-        <button type="submit">Générer le Planning</button>
+        <button type="submit" style="grid-column: 1 / -1;">Générer le Planning</button>
     </form>
     
     <div id="result"></div>

@@ -1,5 +1,4 @@
 class Salle:
-    
     def __init__(self, nom, capacite):
         self.nom = nom
         self.capacite = capacite
@@ -12,7 +11,6 @@ class Salle:
 
 
 class Professeur:
-    
     def __init__(self, nom, matieres=None):
         self.nom = nom
         self.matieres = matieres if matieres else ["Matière générale"]
@@ -22,7 +20,6 @@ class Professeur:
 
 
 class Classe:
-    
     def __init__(self, nom, effectif, nb_heures_semaine):
         self.nom = nom
         self.effectif = effectif

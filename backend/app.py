@@ -1,11 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sheduler import generate_planning
+from api_service import generate_planning
+from config import API_TITLE, API_DESCRIPTION, API_VERSION, API_HOST, API_PORT
+import uvicorn
 
+# =============================================================================
+# CONFIGURATION DE L'APPLICATION
+# =============================================================================
 
-app = FastAPI()
-
+app = FastAPI(
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,16 +23,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Bienvenue dans EduFlex avec FastAPI !"}
-
-
-
+# =============================================================================
+# MODÈLES PYDANTIC
+# =============================================================================
 
 class PlanningRequest(BaseModel):
-    startHour: int
-    endHour: int
+    """Modèle de requête pour générer un planning"""
+    startHour: float
+    endHour: float
     nbProfs: int
     nbClasses: int
     heuresParSemaine: int
@@ -33,10 +39,36 @@ class PlanningRequest(BaseModel):
     effectifMax: int
     capaciteMin: int
     capaciteMax: int
-    matieres: str
+    matieresProfs: list[list[str]]
+
+# =============================================================================
+# ROUTES API
+# =============================================================================
+
+@app.get("/")
+def read_root():
+    """Route racine - Information sur l'API"""
+    return {
+        "message": "Bienvenue dans EduFlex - Générateur de planning scolaire",
+        "version": API_VERSION,
+        "architecture": "Modulaire et optimisée",
+        "endpoints": {
+            "planning": "/planning (POST) - Génère un planning automatique",
+            "docs": "/docs - Documentation interactive"
+        }
+    }
 
 @app.post("/planning")
-async def planning(data: PlanningRequest):
+async def create_planning(data: PlanningRequest):
+    """
+    Génère un planning scolaire automatique basé sur les paramètres fournis.
+    
+    Args:
+        data: Paramètres de configuration du planning
+        
+    Returns:
+        dict: Planning généré avec statistiques
+    """
     try:
         result = generate_planning(
             data.startHour, 
@@ -49,8 +81,23 @@ async def planning(data: PlanningRequest):
             data.effectifMax,
             data.capaciteMin,
             data.capaciteMax,
-            data.matieres
+            data.matieresProfs
         )
         return result
     except ValueError as e:
         return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"Erreur inattendue: {str(e)}"}
+
+# =============================================================================
+# LANCEMENT DU SERVEUR
+# =============================================================================
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app:app", 
+        host=API_HOST, 
+        port=API_PORT, 
+        reload=True,
+        log_level="info"
+    )
