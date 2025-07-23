@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduFlex - Générateur de Planning</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h1>EduFlex - Configuration du Planning</h1>
@@ -27,6 +28,41 @@
         <div>
             <label>Nombre de classes :</label>
             <input type="number" id="nbClasses" min="1" value="5" required>
+        </div>
+        
+        <div>
+            <label>Nombre d'heures de cours par classe par semaine :</label>
+            <input type="number" id="heuresParSemaine" min="1" max="40" value="25" required>
+        </div>
+        
+        <div>
+            <label>Nombre de salles :</label>
+            <input type="number" id="nbSalles" min="1" value="5" required>
+        </div>
+        
+        <div>
+            <label>Effectif minimum par classe :</label>
+            <input type="number" id="effectifMin" min="10" max="50" value="20" required>
+        </div>
+        
+        <div>
+            <label>Effectif maximum par classe :</label>
+            <input type="number" id="effectifMax" min="10" max="50" value="35" required>
+        </div>
+        
+        <div>
+            <label>Capacité minimum des salles :</label>
+            <input type="number" id="capaciteMin" min="15" max="100" value="25" required>
+        </div>
+        
+        <div>
+            <label>Capacité maximum des salles :</label>
+            <input type="number" id="capaciteMax" min="15" max="100" value="40" required>
+        </div>
+        
+        <div>
+            <label>Matières (séparées par des virgules) :</label>
+            <input type="text" id="matieres" value="Mathématiques,Français,Histoire,Sciences,Anglais,Sport" placeholder="Maths,Français,Sciences...">
         </div>
         
         <button type="submit">Générer le Planning</button>

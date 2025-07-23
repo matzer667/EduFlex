@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sheduler import generate_planning
 
 
 app = FastAPI()
@@ -26,11 +27,30 @@ class PlanningRequest(BaseModel):
     endHour: int
     nbProfs: int
     nbClasses: int
+    heuresParSemaine: int
+    nbSalles: int
+    effectifMin: int
+    effectifMax: int
+    capaciteMin: int
+    capaciteMax: int
+    matieres: str
 
 @app.post("/planning")
 async def planning(data: PlanningRequest):
-    print(data.startHour)
-    print(data.endHour)
-    print(data.nbProfs)
-    print(data.nbClasses)
-    return {"message": "Planning reçu !", "start": data.startHour, "end": data.endHour, "profs": data.nbProfs, "classes": data.nbClasses}
+    try:
+        result = generate_planning(
+            data.startHour, 
+            data.endHour, 
+            data.nbProfs, 
+            data.nbClasses,
+            data.heuresParSemaine,
+            data.nbSalles,
+            data.effectifMin,
+            data.effectifMax,
+            data.capaciteMin,
+            data.capaciteMax,
+            data.matieres
+        )
+        return result
+    except ValueError as e:
+        return {"error": str(e)}
