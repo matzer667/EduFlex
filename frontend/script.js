@@ -4,7 +4,7 @@
 
 // Configuration globale
 const CONFIG = {
-    API_URL: "http://127.0.0.1:8001/planning",
+    API_URL: "http://127.0.0.1:8001/planning/pdf",
     MATIERES_DISPONIBLES: [
         "Mathématiques", "Français", "Histoire", "Géographie", "Sciences",
         "Physique", "Chimie", "Biologie", "Anglais", "Espagnol", "Allemand",
@@ -348,8 +348,8 @@ async function handleFormSubmit(e) {
     
     try {
         const formData = collectFormData();
-        const result = await sendPlanningRequest(formData);
-        displayResults(result);
+        await downloadPlanningPDF(formData);
+        showSuccessMessage();
     } catch (error) {
         displayError(error.message);
     } finally {
@@ -366,6 +366,14 @@ function collectFormData() {
     
     if (nbProfs === 0 || nbClasses === 0 || nbSalles === 0) {
         throw new Error("Veuillez ajouter au moins un professeur, une classe et une salle.");
+    }
+    
+    // Collecter les jours de travail sélectionnés
+    const joursCheckboxes = document.querySelectorAll('input[name="joursActifs"]:checked');
+    const joursActifs = Array.from(joursCheckboxes).map(cb => cb.value);
+    
+    if (joursActifs.length === 0) {
+        throw new Error("Veuillez sélectionner au moins un jour de travail.");
     }
     
     // Collecter les matières des professeurs
@@ -403,6 +411,7 @@ function collectFormData() {
     return {
         startHour: parseFloat(document.getElementById("startHour").value),
         endHour: parseFloat(document.getElementById("endHour").value),
+        joursActifs: joursActifs,
         nbProfs: nbProfs,
         nbClasses: nbClasses,
         nbSalles: nbSalles,
@@ -412,7 +421,7 @@ function collectFormData() {
     };
 }
 
-async function sendPlanningRequest(data) {
+async function downloadPlanningPDF(data) {
     console.log("Données envoyées:", data);
     
     const response = await fetch(CONFIG.API_URL, {
@@ -425,84 +434,61 @@ async function sendPlanningRequest(data) {
         throw new Error(`Erreur HTTP ${response.status}`);
     }
     
-    const result = await response.json();
+    // Vérifier si c'est une erreur JSON ou un PDF
+    const contentType = response.headers.get("content-type");
     
-    if (result.error) {
-        throw new Error(result.error);
+    if (contentType && contentType.includes("application/json")) {
+        // C'est une erreur JSON
+        const result = await response.json();
+        if (result.error) {
+            throw new Error(result.error);
+        }
+    } else {
+        // C'est un PDF, le télécharger
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'planning.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     }
-    
-    return result;
 }
 
-// =============================================================================
-// AFFICHAGE DES RÉSULTATS
-// =============================================================================
-
-function displayResults(result) {
+function showSuccessMessage() {
     const container = document.getElementById("results-container");
     const content = document.getElementById("result-content");
     
-    content.innerHTML = generateResultsHTML(result);
-    container.classList.add("show");
-    
-    container.scrollIntoView({ behavior: "smooth" });
-}
-
-function generateResultsHTML(result) {
-    const planning = result.planning || [];
-    const resume = result.resume || {};
-    
-    let html = `
+    content.innerHTML = `
         <div class="success-message">
-            ✅ Planning généré avec succès ! ${planning.length} cours programmés.
+            ✅ <strong>Planning généré avec succès !</strong><br>
+            📥 Le fichier PDF a été téléchargé automatiquement.
         </div>
     `;
     
-    if (resume) {
-        html += `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-                <div class="item-card">
-                    <div class="item-title">📊 Statistiques</div>
-                    <p>Cours programmés: <strong>${planning.length}</strong></p>
-                    <p>Taux de remplissage: <strong>${resume.taux_remplissage || 'N/A'}%</strong></p>
-                </div>
-            </div>
-        `;
-    }
+    container.classList.add("show");
+    container.scrollIntoView({ behavior: "smooth" });
+}
+
+// =============================================================================
+// AFFICHAGE DES MESSAGES
+// =============================================================================
+
+function showSuccessMessage() {
+    const container = document.getElementById("results-container");
+    const content = document.getElementById("result-content");
     
-    if (planning.length > 0) {
-        html += `
-            <div class="form-group">
-                <label class="form-label">📅 Planning détaillé</label>
-                <div style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: var(--glass-medium); border-bottom: 1px solid var(--glass-medium);">
-                                <th style="padding: 0.8rem; text-align: left;">Jour</th>
-                                <th style="padding: 0.8rem; text-align: left;">Heure</th>
-                                <th style="padding: 0.8rem; text-align: left;">Professeur</th>
-                                <th style="padding: 0.8rem; text-align: left;">Classe</th>
-                                <th style="padding: 0.8rem; text-align: left;">Salle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${planning.map(cours => `
-                                <tr style="border-bottom: 1px solid var(--glass-white);">
-                                    <td style="padding: 0.8rem;">${cours.jour}</td>
-                                    <td style="padding: 0.8rem;">${cours.heure}</td>
-                                    <td style="padding: 0.8rem;">${cours.professeur || 'N/A'}</td>
-                                    <td style="padding: 0.8rem;">${cours.classe || 'N/A'}</td>
-                                    <td style="padding: 0.8rem;">${cours.salle || 'N/A'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    }
+    content.innerHTML = `
+        <div class="success-message">
+            ✅ <strong>Planning généré avec succès !</strong><br>
+            📥 Le fichier PDF a été téléchargé automatiquement.
+        </div>
+    `;
     
-    return html;
+    container.classList.add("show");
+    container.scrollIntoView({ behavior: "smooth" });
 }
 
 function displayError(message) {

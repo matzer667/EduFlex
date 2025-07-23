@@ -40,6 +40,7 @@ class PlanningRequest(BaseModel):
     """Modèle de requête pour générer un planning"""
     startHour: float
     endHour: float
+    joursActifs: list[str] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
     nbProfs: int
     nbClasses: int
     nbSalles: int
@@ -79,6 +80,7 @@ async def create_planning(data: PlanningRequest):
         result = generate_planning(
             data.startHour, 
             data.endHour, 
+            data.joursActifs,
             data.nbProfs, 
             data.nbClasses,
             data.nbSalles,
@@ -87,6 +89,59 @@ async def create_planning(data: PlanningRequest):
             data.capacitesSalles
         )
         return result
+    except ValueError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"Erreur inattendue: {str(e)}"}
+
+@app.post("/planning/pdf")
+async def create_planning_pdf(data: PlanningRequest):
+    """
+    Génère un planning scolaire et retourne un PDF téléchargeable.
+    
+    Args:
+        data: Paramètres de configuration du planning
+        
+    Returns:
+        StreamingResponse: PDF du planning
+    """
+    try:
+        from fastapi.responses import StreamingResponse
+        from generateur_pdf import generer_planning_pdf
+        import io
+        
+        # Générer le planning d'abord
+        result = generate_planning(
+            data.startHour, 
+            data.endHour, 
+            data.joursActifs,
+            data.nbProfs, 
+            data.nbClasses,
+            data.nbSalles,
+            data.matieresProfs,
+            data.effectifsClasses,
+            data.capacitesSalles
+        )
+        
+        # Vérifier qu'il n'y a pas d'erreur
+        if "error" in result:
+            return {"error": result["error"]}
+        
+        # Générer le PDF
+        pdf_buffer = generer_planning_pdf(
+            result["planning"], 
+            data.startHour, 
+            data.endHour,
+            data.joursActifs
+        )
+        
+        # Retourner le PDF en tant que fichier téléchargeable
+        return StreamingResponse(
+            io.BytesIO(pdf_buffer.getvalue()),
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=planning.pdf"}
+        )
+        
     except ValueError as e:
         return {"error": str(e)}
     except Exception as e:

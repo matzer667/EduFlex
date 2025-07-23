@@ -8,7 +8,7 @@ from planning_generator import PlanningGenerator
 # =============================================================================
 
 
-def generate_planning(start_hour, end_hour, nb_profs, nb_classes, 
+def generate_planning(start_hour, end_hour, jours_actifs, nb_profs, nb_classes, 
                      nb_salles, matieres_profs, effectifs_classes, capacites_salles):
     """
     Service principal pour générer un planning automatique
@@ -16,6 +16,7 @@ def generate_planning(start_hour, end_hour, nb_profs, nb_classes,
     Args:
         start_hour (float): Heure de début des cours (ex: 8.5 pour 8h30)
         end_hour (float): Heure de fin des cours (ex: 17.75 pour 17h45)
+        jours_actifs (list): Liste des jours de travail sélectionnés
         nb_profs (int): Nombre de professeurs
         nb_classes (int): Nombre de classes
         nb_salles (int): Nombre de salles disponibles
@@ -30,7 +31,7 @@ def generate_planning(start_hour, end_hour, nb_profs, nb_classes,
         ValueError: En cas d'erreur lors de la génération
     """
     try:
-        generator = PlanningGenerator(start_hour, end_hour)
+        generator = PlanningGenerator(start_hour, end_hour, jours_actifs)
         
         for i in range(nb_profs):
             matieres = matieres_profs[i] if i < len(matieres_profs) else ["Matière générale"]

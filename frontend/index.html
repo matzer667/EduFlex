@@ -81,6 +81,48 @@
                             </div>
                         </div>
                         
+                        <!-- Jours de travail -->
+                        <div class="form-group">
+                            <label class="form-label">🗓️ Jours de travail</label>
+                            <div class="checkbox-group" style="margin-top: 1rem;">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Lundi" checked>
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Lundi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Mardi" checked>
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Mardi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Mercredi" checked>
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Mercredi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Jeudi" checked>
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Jeudi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Vendredi" checked>
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Vendredi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Samedi">
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Samedi</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="joursActifs" value="Dimanche">
+                                    <div class="checkbox-custom"></div>
+                                    <span class="checkbox-label">Dimanche</span>
+                                </label>
+                            </div>
+                        </div>
+                        
                         <!-- Champs cachés pour les valeurs calculées -->
                         <input type="hidden" id="startHour" value="8.00">
                         <input type="hidden" id="endHour" value="17.00">
@@ -156,7 +198,7 @@
 
             <!-- Bouton de génération -->
             <button type="submit" class="generate-button">
-                <span id="button-text">🚀 Générer le Planning Optimal</span>
+                <span id="button-text">� Générer et Télécharger le Planning PDF</span>
                 <span id="button-loading" style="display: none;">
                     <span class="loading"></span> Génération en cours...
                 </span>

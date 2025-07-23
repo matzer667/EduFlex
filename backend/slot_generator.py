@@ -9,11 +9,17 @@ from utils import format_heure_decimale, validate_time_range
 
 class SlotGenerator:
     """Générateur de créneaux horaires pour le planning"""
-    def __init__(self, start_hour, end_hour):
+    def __init__(self, start_hour, end_hour, jours_actifs=None):
         validate_time_range(start_hour, end_hour)
         self.start_hour = start_hour
         self.end_hour = end_hour
-        self.days = JOURS_SEMAINE
+        
+        # Utiliser les jours actifs ou les jours par défaut
+        if jours_actifs is None:
+            self.days = JOURS_SEMAINE
+        else:
+            self.days = jours_actifs
+            
         self.slots = []
         self._generate_slots()
     

@@ -10,18 +10,23 @@ from stats import PlanningStats
 class PlanningGenerator:
     """Générateur principal de planning - Orchestrateur"""
     
-    def __init__(self, start_hour, end_hour):
+    def __init__(self, start_hour, end_hour, jours_actifs=None):
         """
         Initialise le générateur de planning
         
         Args:
             start_hour (float): Heure de début de journée
             end_hour (float): Heure de fin de journée
+            jours_actifs (list): Liste des jours de travail (défaut: Lun-Ven)
         """
         self.start_hour = start_hour
         self.end_hour = end_hour
-
-        self.slot_generator = SlotGenerator(start_hour, end_hour)
+        
+        if jours_actifs is None:
+            jours_actifs = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
+        
+        self.jours_actifs = jours_actifs
+        self.slot_generator = SlotGenerator(start_hour, end_hour, jours_actifs)
         
         self.professeurs = []
         self.classes = []

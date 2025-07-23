@@ -218,6 +218,23 @@ body {
     color: var(--text-light);
     backdrop-filter: blur(10px);
     cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: center;
+}
+
+.time-select:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.time-select option {
+    background: var(--dark-anthracite);
+    color: var(--text-light);
+    padding: 0.5rem;
+    font-size: 1rem;
 }
 
 .time-separator {
