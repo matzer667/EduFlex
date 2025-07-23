@@ -3,118 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduFlex - Générateur de Planning</title>
+    <title>EduFlex - Générateur de Planning Intelligent</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>EduFlex - Configuration du Planning</h1>
-    
-    <form id="planningForm">
-        <div class="section-container">
-            <div class="section-header" onclick="toggleSection('horaires')">
-                <h3>📅 Créneaux horaires</h3>
-                <span class="arrow" id="arrow-horaires">▼</span>
-            </div>
-            <div class="section-content" id="horaires">
-                <div>
-                    <label>Heure de début de journée :</label>
-                    <div class="time-selector">
-                        <select id="startHourSelect" required>
-                        </select>
-                        <span class="time-separator">:</span>
-                        <select id="startMinuteSelect" required>
-                            <option value="00">00</option>
-                            <option value="15">15</option>
-                            <option value="30">30</option>
-                            <option value="45">45</option>
-                        </select>
+    <!-- En-tête principal -->
+    <div class="main-header">
+        <div class="container">
+            <h1>🎓 EduFlex</h1>
+            <p>Générateur de planning scolaire intelligent et moderne</p>
+        </div>
+    </div>
+
+    <!-- Conteneur principal -->
+    <div class="container">
+        <form id="planningForm">
+            <!-- Grille des sections principales -->
+            <div class="main-grid">
+                
+                <!-- SECTION 1: ÉTABLISSEMENT -->
+                <div class="main-card" id="etablissement-card">
+                    <div class="card-header">
+                        <div class="card-icon">🏫</div>
+                        <div>
+                            <div class="card-title">Établissement</div>
+                            <div class="card-subtitle">Configuration générale de l'établissement</div>
+                        </div>
+                    </div>
+                    
+                    <div class="add-button" onclick="toggleEtablissementConfig()">
+                        <span class="plus-icon">+</span>
+                        <span class="add-text">Configurer l'établissement</span>
+                    </div>
+                    
+                    <div id="etablissement-config" style="display: none;">
+                        <!-- Horaires de l'établissement -->
+                        <div class="form-group">
+                            <label class="form-label">📅 Horaires de fonctionnement</label>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                <div>
+                                    <label class="form-label" style="font-size: 0.9rem;">Début des cours</label>
+                                    <div class="time-selector">
+                                        <select id="startHourSelect" class="time-select" required>
+                                            <option value="7">07</option>
+                                            <option value="8" selected>08</option>
+                                            <option value="9">09</option>
+                                        </select>
+                                        <span class="time-separator">:</span>
+                                        <select id="startMinuteSelect" class="time-select" required>
+                                            <option value="00" selected>00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="form-label" style="font-size: 0.9rem;">Fin des cours</label>
+                                    <div class="time-selector">
+                                        <select id="endHourSelect" class="time-select" required>
+                                            <option value="15">15</option>
+                                            <option value="16">16</option>
+                                            <option value="17" selected>17</option>
+                                            <option value="18">18</option>
+                                        </select>
+                                        <span class="time-separator">:</span>
+                                        <select id="endMinuteSelect" class="time-select" required>
+                                            <option value="00" selected>00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Champs cachés pour les valeurs calculées -->
+                        <input type="hidden" id="startHour" value="8.00">
+                        <input type="hidden" id="endHour" value="17.00">
                     </div>
                 </div>
-                <div>
-                    <label>Heure de fin de journée :</label>
-                    <div class="time-selector">
-                        <select id="endHourSelect" required>
-                        </select>
-                        <span class="time-separator">:</span>
-                        <select id="endMinuteSelect" required>
-                            <option value="00">00</option>
-                            <option value="15">15</option>
-                            <option value="30">30</option>
-                            <option value="45">45</option>
-                        </select>
+
+                <!-- SECTION 2: RESSOURCES HUMAINES -->
+                <div class="main-card" id="ressources-card">
+                    <div class="card-header">
+                        <div class="card-icon">👨‍🏫</div>
+                        <div>
+                            <div class="card-title">Ressources Humaines</div>
+                            <div class="card-subtitle">Professeurs et leurs spécialités</div>
+                        </div>
                     </div>
+                    
+                    <div class="add-button" onclick="ajouterProfesseur()">
+                        <span class="plus-icon">+</span>
+                        <span class="add-text">Ajouter un professeur</span>
+                    </div>
+                    
+                    <div id="professeurs-container" class="dynamic-grid">
+                        <!-- Les professeurs seront générés ici dynamiquement -->
+                    </div>
+                    
+                    <input type="hidden" id="nbProfs" value="0">
                 </div>
-                <input type="hidden" id="startHour" value="8.00">
-                <input type="hidden" id="endHour" value="17.00">
-            </div>
-        </div>
 
-        <div class="section-container">
-            <div class="section-header" onclick="toggleSection('classes')">
-                <h3>🎓 Organisation des classes</h3>
-                <span class="arrow" id="arrow-classes">▼</span>
-            </div>
-            <div class="section-content" id="classes">
-                <div>
-                    <label>Nombre de classes :</label>
-                    <input type="number" id="nbClasses" min="1" value="5" required>
+                <!-- SECTION 3: ORGANISATION PÉDAGOGIQUE -->
+                <div class="main-card" id="pedagogie-card">
+                    <div class="card-header">
+                        <div class="card-icon">🎓</div>
+                        <div>
+                            <div class="card-title">Organisation Pédagogique</div>
+                            <div class="card-subtitle">Classes et effectifs</div>
+                        </div>
+                    </div>
+                    
+                    <div class="add-button" onclick="ajouterClasse()">
+                        <span class="plus-icon">+</span>
+                        <span class="add-text">Ajouter une classe</span>
+                    </div>
+                    
+                    <div id="classes-container" class="dynamic-grid">
+                        <!-- Les classes seront générées ici dynamiquement -->
+                    </div>
+                    
+                    <input type="hidden" id="nbClasses" value="0">
                 </div>
-                <div>
-                    <label>Heures de cours par classe/semaine :</label>
-                    <input type="number" id="heuresParSemaine" min="1" max="40" value="25" required>
-                </div>
-                <div>
-                    <label>Effectif minimum par classe :</label>
-                    <input type="number" id="effectifMin" min="10" max="50" value="20" required>
-                </div>
-                <div>
-                    <label>Effectif maximum par classe :</label>
-                    <input type="number" id="effectifMax" min="10" max="50" value="35" required>
-                </div>
-            </div>
-        </div>
 
-        <div class="section-container">
-            <div class="section-header" onclick="toggleSection('professeurs')">
-                <h3>👨‍🏫 Ressources professeurs</h3>
-                <span class="arrow" id="arrow-professeurs">▼</span>
-            </div>
-            <div class="section-content" id="professeurs">
-                <div>
-                    <label>Nombre de professeurs :</label>
-                    <input type="number" id="nbProfs" min="1" value="3" required>
+                <!-- SECTION 4: INFRASTRUCTURE -->
+                <div class="main-card" id="infrastructure-card">
+                    <div class="card-header">
+                        <div class="card-icon">🏢</div>
+                        <div>
+                            <div class="card-title">Infrastructure</div>
+                            <div class="card-subtitle">Salles et capacités d'accueil</div>
+                        </div>
+                    </div>
+                    
+                    <div class="add-button" onclick="ajouterSalle()">
+                        <span class="plus-icon">+</span>
+                        <span class="add-text">Ajouter une salle</span>
+                    </div>
+                    
+                    <div id="salles-container" class="dynamic-grid">
+                        <!-- Les salles seront générées ici dynamiquement -->
+                    </div>
+                    
+                    <input type="hidden" id="nbSalles" value="0">
                 </div>
-                <div id="profMatieresContainer" style="grid-column: 1 / -1;">
-                </div>
             </div>
-        </div>
 
-        <div class="section-container">
-            <div class="section-header" onclick="toggleSection('salles')">
-                <h3>🏫 Salles et équipements</h3>
-                <span class="arrow" id="arrow-salles">▼</span>
+            <!-- Bouton de génération -->
+            <button type="submit" class="generate-button">
+                <span id="button-text">🚀 Générer le Planning Optimal</span>
+                <span id="button-loading" style="display: none;">
+                    <span class="loading"></span> Génération en cours...
+                </span>
+            </button>
+        </form>
+
+        <!-- Zone de résultats -->
+        <div id="results-container" class="results-container">
+            <div class="card-header">
+                <div class="card-icon">📊</div>
+                <div>
+                    <div class="card-title">Planning Généré</div>
+                    <div class="card-subtitle">Résultats de la génération automatique</div>
+                </div>
             </div>
-            <div class="section-content" id="salles">
-                <div>
-                    <label>Nombre de salles :</label>
-                    <input type="number" id="nbSalles" min="1" value="5" required>
-                </div>
-                <div>
-                    <label>Capacité minimum des salles :</label>
-                    <input type="number" id="capaciteMin" min="15" max="100" value="25" required>
-                </div>
-                <div>
-                    <label>Capacité maximum des salles :</label>
-                    <input type="number" id="capaciteMax" min="15" max="100" value="40" required>
-                </div>
+            <div id="result-content">
+                <!-- Les résultats seront affichés ici -->
             </div>
         </div>
-        
-        <button type="submit" style="grid-column: 1 / -1;">Générer le Planning</button>
-    </form>
-    
-    <div id="result"></div>
-    
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

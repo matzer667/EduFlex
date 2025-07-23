@@ -1,10 +1,11 @@
+from slot_generator import SlotGenerator
+from scheduling_algorithm import SchedulingAlgorithm
+from stats import PlanningStats
+
 # =============================================================================
 # GÉNÉRATEUR DE PLANNING PRINCIPAL - Orchestrateur de la génération
 # =============================================================================
 
-from slot_generator import SlotGenerator
-from scheduling_algorithm import SchedulingAlgorithm
-from stats import PlanningStats
 
 class PlanningGenerator:
     """Générateur principal de planning - Orchestrateur"""
@@ -19,16 +20,13 @@ class PlanningGenerator:
         """
         self.start_hour = start_hour
         self.end_hour = end_hour
-        
-        # Générateurs spécialisés
+
         self.slot_generator = SlotGenerator(start_hour, end_hour)
         
-        # Ressources
         self.professeurs = []
         self.classes = []
         self.salles = []
         
-        # Planning généré
         self.planning = []
         self.algorithm = None
         self.stats = None
@@ -52,14 +50,12 @@ class PlanningGenerator:
         Returns:
             list: Planning généré
         """
-        # Initialiser l'algorithme de planification
+
         self.algorithm = SchedulingAlgorithm(self.professeurs, self.classes, self.salles)
-        
-        # Générer le planning
+
         slots = self.slot_generator.get_slots()
         self.planning = self.algorithm.generate_planning(slots)
-        
-        # Initialiser les statistiques
+    
         self.stats = PlanningStats(
             self.planning, 
             self.professeurs, 

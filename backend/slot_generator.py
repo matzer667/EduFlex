@@ -1,35 +1,26 @@
+from config import JOURS_SEMAINE, DUREE_CRENEAU
+from utils import format_heure_decimale, validate_time_range
+
 # =============================================================================
 # GÉNÉRATEUR DE CRÉNEAUX - Logique de génération des slots temporels
 # =============================================================================
 
-from config import JOURS_SEMAINE, DUREE_CRENEAU
-from utils import format_heure_decimale, validate_time_range
+
 
 class SlotGenerator:
     """Générateur de créneaux horaires pour le planning"""
-    
     def __init__(self, start_hour, end_hour):
-        """
-        Initialise le générateur de créneaux
-        
-        Args:
-            start_hour (float): Heure de début de journée
-            end_hour (float): Heure de fin de journée
-        """
         validate_time_range(start_hour, end_hour)
-        
         self.start_hour = start_hour
         self.end_hour = end_hour
         self.days = JOURS_SEMAINE
         self.slots = []
-        
         self._generate_slots()
     
     def _generate_slots(self):
         """Génère tous les créneaux horaires pour la semaine"""
         for day in self.days:
             current_hour = self.start_hour
-            
             while current_hour < self.end_hour:
                 slot_end = min(current_hour + DUREE_CRENEAU, self.end_hour)
                 
@@ -40,7 +31,6 @@ class SlotGenerator:
                         "hour_end": slot_end,
                         "formatted": f"{format_heure_decimale(current_hour)}-{format_heure_decimale(slot_end)}"
                     })
-                
                 current_hour += DUREE_CRENEAU
     
     def get_slots(self):

@@ -1,318 +1,526 @@
-const MATIERES_DISPONIBLES = [
-    "Mathématiques",
-    "Français", 
-    "Histoire",
-    "Géographie",
-    "Sciences",
-    "Physique",
-    "Chimie",
-    "Biologie",
-    "Anglais",
-    "Espagnol",
-    "Allemand",
-    "Sport",
-    "Arts Plastiques",
-    "Musique",
-    "Technologie",
-    "Informatique"
-];
+// =============================================================================
+// EDUFLEX - SCRIPT MODERNE AVEC GESTION MODULAIRE
+// =============================================================================
 
-function toggleSection(sectionId) {
-    const content = document.getElementById(sectionId);
-    const arrow = document.getElementById(`arrow-${sectionId}`);
-    
-    if (content.classList.contains('collapsed')) {
-        content.classList.remove('collapsed');
-        arrow.classList.remove('rotated');
-    } else {
-        content.classList.add('collapsed');
-        arrow.classList.add('rotated');
-    }
-}
+// Configuration globale
+const CONFIG = {
+    API_URL: "http://127.0.0.1:8001/planning",
+    MATIERES_DISPONIBLES: [
+        "Mathématiques", "Français", "Histoire", "Géographie", "Sciences",
+        "Physique", "Chimie", "Biologie", "Anglais", "Espagnol", "Allemand",
+        "Sport", "Arts Plastiques", "Musique", "Technologie", "Informatique"
+    ]
+};
 
-function formatHeure(heureDecimale) {
-    const heures = Math.floor(heureDecimale);
-    const minutes = Math.round((heureDecimale - heures) * 60);
-    return `${heures.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
+// État de l'application
+let appState = {
+    etablissementConfigured: false,
+    professeurs: [],
+    classes: [],
+    salles: []
+};
+
+// =============================================================================
+// INITIALISATION
+// =============================================================================
+
+document.addEventListener("DOMContentLoaded", function() {
+    initializeTimeSelectors();
+    initializeEventListeners();
+});
 
 function initializeTimeSelectors() {
-    const startHourSelect = document.getElementById('startHourSelect');
-    const endHourSelect = document.getElementById('endHourSelect');
-
-    for (let hour = 6; hour <= 23; hour++) {
-        const startOption = document.createElement('option');
-        startOption.value = hour.toString().padStart(2, '0');
-        startOption.textContent = hour.toString().padStart(2, '0');
-        if (hour === 8) startOption.selected = true;
-        startHourSelect.appendChild(startOption);
-        
-        const endOption = document.createElement('option');
-        endOption.value = hour.toString().padStart(2, '0');
-        endOption.textContent = hour.toString().padStart(2, '0');
-        if (hour === 17) endOption.selected = true;
-        endHourSelect.appendChild(endOption);
-    }
-    
-    // Écouter les changements et mettre à jour les inputs cachés
-    function updateHiddenInputs() {
-        const startHourValue = parseInt(document.getElementById('startHourSelect').value);
-        const startMinuteValue = parseInt(document.getElementById('startMinuteSelect').value);
-        const endHourValue = parseInt(document.getElementById('endHourSelect').value);
-        const endMinuteValue = parseInt(document.getElementById('endMinuteSelect').value);
-        
-        // Convertir en format décimal
-        const startDecimal = startHourValue + (startMinuteValue / 60);
-        const endDecimal = endHourValue + (endMinuteValue / 60);
-        
-        document.getElementById('startHour').value = startDecimal.toFixed(2);
-        document.getElementById('endHour').value = endDecimal.toFixed(2);
-    }
-    
-    // Attacher les événements
-    document.getElementById('startHourSelect').addEventListener('change', updateHiddenInputs);
-    document.getElementById('startMinuteSelect').addEventListener('change', updateHiddenInputs);
-    document.getElementById('endHourSelect').addEventListener('change', updateHiddenInputs);
-    document.getElementById('endMinuteSelect').addEventListener('change', updateHiddenInputs);
-    
-    // Initialiser les valeurs
-    updateHiddenInputs();
+    populateTimeSelectors();
+    document.getElementById("startHourSelect").addEventListener("change", updateHiddenTimeFields);
+    document.getElementById("startMinuteSelect").addEventListener("change", updateHiddenTimeFields);
+    document.getElementById("endHourSelect").addEventListener("change", updateHiddenTimeFields);
+    document.getElementById("endMinuteSelect").addEventListener("change", updateHiddenTimeFields);
 }
 
-function generatePlanningHTML(result) {
-    // Extraire les heures de début et fin des paramètres (format décimal)
-    const startHour = parseFloat(document.getElementById("startHour").value) || 8.0;
-    const endHour = parseFloat(document.getElementById("endHour").value) || 17.0;
+function populateTimeSelectors() {
+    const startHourSelect = document.getElementById("startHourSelect");
+    const endHourSelect = document.getElementById("endHourSelect");
     
-    // Créer la grille complète des créneaux avec pas de 1 heure
-    const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
-    const heuresCompletes = [];
-    
-    // Générer les créneaux d'1 heure à partir des heures décimales (comme le backend)
-    let currentHour = startHour;
-    
-    while (currentHour < endHour) {
-        const slotEnd = Math.min(currentHour + 1.0, endHour);
+    for (let i = 6; i <= 22; i++) {
+        const startOption = document.createElement("option");
+        startOption.value = i;
+        startOption.textContent = i.toString().padStart(2, '0');
+        if (i === 8) startOption.selected = true;
+        startHourSelect.appendChild(startOption);
         
-        if (slotEnd > currentHour) {
-            const startFormatted = formatHeure(currentHour);
-            const endFormatted = formatHeure(slotEnd);
-            heuresCompletes.push(`${startFormatted}-${endFormatted}`);
+        const endOption = document.createElement("option");
+        endOption.value = i;
+        endOption.textContent = i.toString().padStart(2, '0');
+        if (i === 17) endOption.selected = true;
+        endHourSelect.appendChild(endOption);
+    }
+}
+
+function updateHiddenTimeFields() {
+    const startHour = parseInt(document.getElementById("startHourSelect").value);
+    const startMinute = parseInt(document.getElementById("startMinuteSelect").value);
+    const endHour = parseInt(document.getElementById("endHourSelect").value);
+    const endMinute = parseInt(document.getElementById("endMinuteSelect").value);
+    
+    const startDecimal = startHour + (startMinute / 60);
+    const endDecimal = endHour + (endMinute / 60);
+    
+    document.getElementById("startHour").value = startDecimal.toFixed(2);
+    document.getElementById("endHour").value = endDecimal.toFixed(2);
+}
+
+function initializeEventListeners() {
+    document.getElementById("planningForm").addEventListener("submit", handleFormSubmit);
+}
+
+// =============================================================================
+// GESTION DE L'ÉTABLISSEMENT
+// =============================================================================
+
+function toggleEtablissementConfig() {
+    const config = document.getElementById("etablissement-config");
+    const button = document.querySelector("#etablissement-card .add-button");
+    
+    if (config.style.display === "none") {
+        config.style.display = "block";
+        button.innerHTML = '<span class="plus-icon">-</span><span class="add-text">Masquer la configuration</span>';
+        appState.etablissementConfigured = true;
+        
+        config.style.opacity = "0";
+        config.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+            config.style.transition = "all 0.3s ease";
+            config.style.opacity = "1";
+            config.style.transform = "translateY(0)";
+        }, 10);
+    } else {
+        config.style.display = "none";
+        button.innerHTML = '<span class="plus-icon">+</span><span class="add-text">Configurer l\'établissement</span>';
+    }
+}
+
+// =============================================================================
+// GESTION DES PROFESSEURS
+// =============================================================================
+
+function ajouterProfesseur() {
+    const container = document.getElementById("professeurs-container");
+    
+    // Trouver le prochain numéro disponible (le plus petit non utilisé)
+    const existingCards = container.querySelectorAll('[id^="prof-card-"]');
+    const usedNumbers = Array.from(existingCards).map(card => 
+        parseInt(card.id.split('-')[2])
+    ).sort((a, b) => a - b);
+    
+    let profId = 1;
+    for (let i = 0; i < usedNumbers.length; i++) {
+        if (usedNumbers[i] !== profId) {
+            break;
         }
-        
-        currentHour += 1.0;
+        profId++;
     }
     
-    const planningGrid = {};
-    jours.forEach(jour => {
-        planningGrid[jour] = {};
-        heuresCompletes.forEach(heure => {
-            planningGrid[jour][heure] = []; 
+    const profCard = createProfesseurCard(profId);
+    container.appendChild(profCard);
+    
+    // Mettre à jour le compteur caché
+    document.getElementById("nbProfs").value = container.children.length;
+    
+    // Animation d'apparition
+    profCard.style.opacity = "0";
+    profCard.style.transform = "translateY(-20px)";
+    setTimeout(() => {
+        profCard.style.transition = "all 0.3s ease";
+        profCard.style.opacity = "1";
+        profCard.style.transform = "translateY(0)";
+    }, 10);
+}
+
+function supprimerProfesseur(profId) {
+    const profCard = document.getElementById(`prof-card-${profId}`);
+    if (profCard) {
+        profCard.style.transition = "all 0.3s ease";
+        profCard.style.opacity = "0";
+        profCard.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+            profCard.remove();
+            // Mettre à jour le compteur basé sur le nombre réel d'éléments
+            const container = document.getElementById("professeurs-container");
+            document.getElementById("nbProfs").value = container.children.length;
+        }, 300);
+    }
+}
+
+function createProfesseurCard(profNumber) {
+    const card = document.createElement("div");
+    card.className = "item-card hoverable";
+    card.id = `prof-card-${profNumber}`;
+    card.innerHTML = `
+        <div class="item-header">
+            <div class="item-title">👨‍🏫 Professeur ${profNumber}</div>
+            <div class="item-controls">
+                <div class="item-number">${profNumber}</div>
+                <button type="button" class="delete-button" onclick="supprimerProfesseur(${profNumber})">×</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Matières enseignées</label>
+            <div class="checkbox-group">
+                ${CONFIG.MATIERES_DISPONIBLES.map(matiere => `
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="prof${profNumber}Matieres" value="${matiere}">
+                        <div class="checkbox-custom"></div>
+                        <span class="checkbox-label">${matiere}</span>
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// =============================================================================
+// GESTION DES CLASSES
+// =============================================================================
+
+function ajouterClasse() {
+    const container = document.getElementById("classes-container");
+    
+    // Trouver le prochain numéro disponible (le plus petit non utilisé)
+    const existingCards = container.querySelectorAll('[id^="classe-card-"]');
+    const usedNumbers = Array.from(existingCards).map(card => 
+        parseInt(card.id.split('-')[2])
+    ).sort((a, b) => a - b);
+    
+    let classeId = 1;
+    for (let i = 0; i < usedNumbers.length; i++) {
+        if (usedNumbers[i] !== classeId) {
+            break;
+        }
+        classeId++;
+    }
+    
+    const classeCard = createClasseCard(classeId);
+    container.appendChild(classeCard);
+    
+    document.getElementById("nbClasses").value = container.children.length;
+    
+    classeCard.style.opacity = "0";
+    classeCard.style.transform = "translateY(-20px)";
+    setTimeout(() => {
+        classeCard.style.transition = "all 0.3s ease";
+        classeCard.style.opacity = "1";
+        classeCard.style.transform = "translateY(0)";
+    }, 10);
+}
+
+function supprimerClasse(classeId) {
+    const classeCard = document.getElementById(`classe-card-${classeId}`);
+    if (classeCard) {
+        classeCard.style.transition = "all 0.3s ease";
+        classeCard.style.opacity = "0";
+        classeCard.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+            classeCard.remove();
+            const container = document.getElementById("classes-container");
+            document.getElementById("nbClasses").value = container.children.length;
+        }, 300);
+    }
+}
+
+function createClasseCard(classeNumber) {
+    const card = document.createElement("div");
+    card.className = "item-card hoverable";
+    card.id = `classe-card-${classeNumber}`;
+    card.innerHTML = `
+        <div class="item-header">
+            <div class="item-title">🎓 Classe ${classeNumber}</div>
+            <div class="item-controls">
+                <div class="item-number">${classeNumber}</div>
+                <button type="button" class="delete-button" onclick="supprimerClasse(${classeNumber})">×</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Effectif de la classe</label>
+            <input type="number" name="classe${classeNumber}Effectif" class="form-input" 
+                   min="1" max="50" value="25" placeholder="Nombre d'élèves">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Heures par semaine</label>
+            <input type="number" name="classe${classeNumber}Heures" class="form-input" 
+                   min="1" max="35" value="25" placeholder="Nombre de cours par semaine">
+        </div>
+    `;
+    
+    return card;
+}
+
+// =============================================================================
+// GESTION DES SALLES
+// =============================================================================
+
+function ajouterSalle() {
+    const container = document.getElementById("salles-container");
+    
+    // Trouver le prochain numéro disponible (le plus petit non utilisé)
+    const existingCards = container.querySelectorAll('[id^="salle-card-"]');
+    const usedNumbers = Array.from(existingCards).map(card => 
+        parseInt(card.id.split('-')[2])
+    ).sort((a, b) => a - b);
+    
+    let salleId = 1;
+    for (let i = 0; i < usedNumbers.length; i++) {
+        if (usedNumbers[i] !== salleId) {
+            break;
+        }
+        salleId++;
+    }
+    
+    const salleCard = createSalleCard(salleId);
+    container.appendChild(salleCard);
+    
+    document.getElementById("nbSalles").value = container.children.length;
+    
+    salleCard.style.opacity = "0";
+    salleCard.style.transform = "translateY(-20px)";
+    setTimeout(() => {
+        salleCard.style.transition = "all 0.3s ease";
+        salleCard.style.opacity = "1";
+        salleCard.style.transform = "translateY(0)";
+    }, 10);
+}
+
+function supprimerSalle(salleId) {
+    const salleCard = document.getElementById(`salle-card-${salleId}`);
+    if (salleCard) {
+        salleCard.style.transition = "all 0.3s ease";
+        salleCard.style.opacity = "0";
+        salleCard.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+            salleCard.remove();
+            const container = document.getElementById("salles-container");
+            document.getElementById("nbSalles").value = container.children.length;
+        }, 300);
+    }
+}
+
+function createSalleCard(salleNumber) {
+    const card = document.createElement("div");
+    card.className = "item-card hoverable";
+    card.id = `salle-card-${salleNumber}`;
+    card.innerHTML = `
+        <div class="item-header">
+            <div class="item-title">🏢 Salle ${salleNumber}</div>
+            <div class="item-controls">
+                <div class="item-number">${salleNumber}</div>
+                <button type="button" class="delete-button" onclick="supprimerSalle(${salleNumber})">×</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Capacité d'accueil</label>
+            <input type="number" name="salle${salleNumber}Capacite" class="form-input" 
+                   min="1" max="100" value="30" placeholder="Nombre de places">
+        </div>
+    `;
+    
+    return card;
+}
+
+// =============================================================================
+// COLLECTE ET ENVOI DES DONNÉES
+// =============================================================================
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const button = document.querySelector(".generate-button");
+    const buttonText = document.getElementById("button-text");
+    const buttonLoading = document.getElementById("button-loading");
+    
+    button.disabled = true;
+    buttonText.style.display = "none";
+    buttonLoading.style.display = "inline-flex";
+    
+    try {
+        const formData = collectFormData();
+        const result = await sendPlanningRequest(formData);
+        displayResults(result);
+    } catch (error) {
+        displayError(error.message);
+    } finally {
+        button.disabled = false;
+        buttonText.style.display = "inline";
+        buttonLoading.style.display = "none";
+    }
+}
+
+function collectFormData() {
+    const nbProfs = parseInt(document.getElementById("nbProfs").value);
+    const nbClasses = parseInt(document.getElementById("nbClasses").value);
+    const nbSalles = parseInt(document.getElementById("nbSalles").value);
+    
+    if (nbProfs === 0 || nbClasses === 0 || nbSalles === 0) {
+        throw new Error("Veuillez ajouter au moins un professeur, une classe et une salle.");
+    }
+    
+    // Collecter les matières des professeurs
+    const matieresProfs = [];
+    const profCards = document.querySelectorAll('[id^="prof-card-"]');
+    profCards.forEach((card, index) => {
+        const profNumber = card.id.split('-')[2];
+        const checkboxes = card.querySelectorAll(`input[name="prof${profNumber}Matieres"]:checked`);
+        const matieres = Array.from(checkboxes).map(cb => cb.value);
+        matieresProfs.push(matieres.length > 0 ? matieres : ["Matière générale"]);
+    });
+    
+    // Collecter les effectifs des classes
+    const effectifsClasses = [];
+    const classeCards = document.querySelectorAll('[id^="classe-card-"]');
+    classeCards.forEach((card, index) => {
+        const classeNumber = card.id.split('-')[2];
+        const effectif = parseInt(card.querySelector(`input[name="classe${classeNumber}Effectif"]`).value) || 25;
+        const heures = parseInt(card.querySelector(`input[name="classe${classeNumber}Heures"]`).value) || 25;
+        effectifsClasses.push({ 
+            effectif: effectif,
+            heures_semaine: heures 
         });
     });
     
-    result.planning.forEach(cours => {
-        if (planningGrid[cours.jour] && planningGrid[cours.jour][cours.heure]) {
-            planningGrid[cours.jour][cours.heure].push(cours);
-        }
+    // Collecter les capacités des salles
+    const capacitesSalles = [];
+    const salleCards = document.querySelectorAll('[id^="salle-card-"]');
+    salleCards.forEach((card, index) => {
+        const salleNumber = card.id.split('-')[2];
+        const capacite = parseInt(card.querySelector(`input[name="salle${salleNumber}Capacite"]`).value) || 30;
+        capacitesSalles.push({ capacite: capacite });
     });
     
-    const joursAvecCours = jours.filter(jour => {
-        return heuresCompletes.some(heure => planningGrid[jour][heure].length > 0);
+    return {
+        startHour: parseFloat(document.getElementById("startHour").value),
+        endHour: parseFloat(document.getElementById("endHour").value),
+        nbProfs: nbProfs,
+        nbClasses: nbClasses,
+        nbSalles: nbSalles,
+        matieresProfs: matieresProfs,
+        effectifsClasses: effectifsClasses,
+        capacitesSalles: capacitesSalles
+    };
+}
+
+async function sendPlanningRequest(data) {
+    console.log("Données envoyées:", data);
+    
+    const response = await fetch(CONFIG.API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
     });
+    
+    if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.error) {
+        throw new Error(result.error);
+    }
+    
+    return result;
+}
+
+// =============================================================================
+// AFFICHAGE DES RÉSULTATS
+// =============================================================================
+
+function displayResults(result) {
+    const container = document.getElementById("results-container");
+    const content = document.getElementById("result-content");
+    
+    content.innerHTML = generateResultsHTML(result);
+    container.classList.add("show");
+    
+    container.scrollIntoView({ behavior: "smooth" });
+}
+
+function generateResultsHTML(result) {
+    const planning = result.planning || [];
+    const resume = result.resume || {};
     
     let html = `
-        <div class="planning-container">
-            <div class="planning-header">
-                <h2>📅 Planning Généré</h2>
-                <div class="planning-stats">
-                    <span class="stat">📚 ${result.total_cours} cours</span>
-                    <span class="stat">⏰ ${result.total_heures}h totales</span>
-                    <span class="stat">👨‍🏫 ${Object.keys(result.heures_par_prof).length} professeurs</span>
-                    <span class="stat">🕐 ${formatHeure(startHour)}-${formatHeure(endHour)}</span>
+        <div class="success-message">
+            ✅ Planning généré avec succès ! ${planning.length} cours programmés.
+        </div>
+    `;
+    
+    if (resume) {
+        html += `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <div class="item-card">
+                    <div class="item-title">📊 Statistiques</div>
+                    <p>Cours programmés: <strong>${planning.length}</strong></p>
+                    <p>Taux de remplissage: <strong>${resume.taux_remplissage || 'N/A'}%</strong></p>
                 </div>
             </div>
-            
-            <div class="planning-table-container">
-                <table class="planning-table">
-                    <thead>
-                        <tr>
-                            <th class="time-header">Heures</th>`;
+        `;
+    }
     
-    joursAvecCours.forEach(jour => {
-        html += `<th class="day-header">${jour}</th>`;
-    });
-    
-    html += `</tr></thead><tbody>`;
-    
-    heuresCompletes.forEach(heure => {
-        html += `<tr><td class="time-cell">${heure}</td>`;
-        
-        joursAvecCours.forEach(jour => {
-            const coursListe = planningGrid[jour][heure];
-            if (coursListe.length > 0) {
-                html += `<td class="course-cell">`;
-                coursListe.forEach((cours, index) => {
-                    html += `
-                        <div class="course-info ${index > 0 ? 'course-separator' : ''}">
-                            <div class="prof-name">👨‍🏫 ${cours.professeur}</div>
-                            <div class="class-name">🎓 ${cours.classe}</div>
-                            <div class="room-name">🏫 ${cours.salle}</div>
-                        </div>`;
-                });
-                html += `</td>`;
-            } else {
-                html += `<td class="empty-cell">-</td>`;
-            }
-        });
-        
-        html += `</tr>`;
-    });
-    
-    html += `</tbody></table></div>`;
-    
-    html += `
-        <div class="stats-section">
-            <div class="stat-block">
-                <h3>👨‍🏫 Heures par Professeur</h3>
-                <div class="stat-grid">`;
-    
-    Object.entries(result.heures_par_prof).forEach(([prof, heures]) => {
-        html += `<div class="stat-item"><span class="stat-label">${prof}</span><span class="stat-value">${heures}h</span></div>`;
-    });
-    
-    html += `</div></div><div class="stat-block">
-                <h3>🎓 Heures par Classe</h3>
-                <div class="stat-grid">`;
-    
-    Object.entries(result.heures_par_classe).forEach(([classe, heures]) => {
-        html += `<div class="stat-item"><span class="stat-label">${classe}</span><span class="stat-value">${heures}h</span></div>`;
-    });
-    
-    html += `</div></div></div></div>`;
+    if (planning.length > 0) {
+        html += `
+            <div class="form-group">
+                <label class="form-label">📅 Planning détaillé</label>
+                <div style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--glass-medium); border-bottom: 1px solid var(--glass-medium);">
+                                <th style="padding: 0.8rem; text-align: left;">Jour</th>
+                                <th style="padding: 0.8rem; text-align: left;">Heure</th>
+                                <th style="padding: 0.8rem; text-align: left;">Professeur</th>
+                                <th style="padding: 0.8rem; text-align: left;">Classe</th>
+                                <th style="padding: 0.8rem; text-align: left;">Salle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${planning.map(cours => `
+                                <tr style="border-bottom: 1px solid var(--glass-white);">
+                                    <td style="padding: 0.8rem;">${cours.jour}</td>
+                                    <td style="padding: 0.8rem;">${cours.heure}</td>
+                                    <td style="padding: 0.8rem;">${cours.professeur || 'N/A'}</td>
+                                    <td style="padding: 0.8rem;">${cours.classe || 'N/A'}</td>
+                                    <td style="padding: 0.8rem;">${cours.salle || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
     
     return html;
 }
 
-function generateProfMatieresFields(nbProfs) {
-    const container = document.getElementById("profMatieresContainer");
-    container.innerHTML = "";
-    container.style.display = "grid";
-    container.style.gridTemplateColumns = "1fr 1fr";
-    container.style.gap = "20px";
+function displayError(message) {
+    const container = document.getElementById("results-container");
+    const content = document.getElementById("result-content");
     
-    for (let i = 1; i <= nbProfs; i++) {
-        const profDiv = document.createElement("div");
-        profDiv.style.border = "1px solid #ddd";
-        profDiv.style.padding = "15px";
-        profDiv.style.borderRadius = "8px";
-        profDiv.style.backgroundColor = "#f9f9f9";
-        
-        let html = `<h4 style="margin: 0 0 10px 0; color: #2c3e50;">Professeur ${i}</h4>`;
-        html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">`;
-        
-        MATIERES_DISPONIBLES.forEach(matiere => {
-            html += `
-                <label style="display: flex; align-items: center; font-size: 14px; cursor: pointer;">
-                    <input type="checkbox" name="prof${i}Matieres" value="${matiere}" style="margin-right: 8px;">
-                    ${matiere}
-                </label>
-            `;
-        });
-        
-        html += `</div>`;
-        profDiv.innerHTML = html;
-        container.appendChild(profDiv);
-    }
+    content.innerHTML = `
+        <div class="error-message">
+            ❌ <strong>Erreur lors de la génération :</strong><br>
+            ${message}
+        </div>
+    `;
+    
+    container.classList.add("show");
+    container.scrollIntoView({ behavior: "smooth" });
 }
 
-
-document.getElementById("nbProfs").addEventListener("input", function() {
-    const nbProfs = parseInt(this.value) || 0;
-    if (nbProfs > 0) {
-        generateProfMatieresFields(nbProfs);
-    } else {
-        document.getElementById("profMatieresContainer").innerHTML = "";
-    }
-});
-
-
-document.addEventListener("DOMContentLoaded", function() {
-    // Initialiser les sélecteurs d'heures
-    initializeTimeSelectors();
-    
-    const nbProfsDefault = parseInt(document.getElementById("nbProfs").value) || 0;
-    if (nbProfsDefault > 0) {
-        generateProfMatieresFields(nbProfsDefault);
-    }
-    
-    // Initialisation des sections - toutes ouvertes par défaut
-    const sections = ['horaires', 'classes', 'professeurs', 'salles'];
-    sections.forEach(sectionId => {
-        const content = document.getElementById(sectionId);
-        const arrow = document.getElementById(`arrow-${sectionId}`);
-        content.classList.remove('collapsed');
-        arrow.classList.remove('rotated');
-    });
-});
-
-document.getElementById("planningForm").addEventListener("submit", async (e) => {
-    e.preventDefault(); 
-
-    const nbProfs = parseInt(document.getElementById("nbProfs").value);
-    
-    const matieresProfs = [];
-    for (let i = 1; i <= nbProfs; i++) {
-        const checkboxes = document.querySelectorAll(`input[name="prof${i}Matieres"]:checked`);
-        const matieresSelectionnees = Array.from(checkboxes).map(cb => cb.value);
-        
-        if (matieresSelectionnees.length === 0) {
-            matieresSelectionnees.push("Matière générale");
-        }
-        
-        matieresProfs.push(matieresSelectionnees);
-    }
-
-    const data = {
-        startHour: parseFloat(document.getElementById("startHour").value),
-        endHour: parseFloat(document.getElementById("endHour").value),
-        nbProfs: nbProfs,
-        nbClasses: parseInt(document.getElementById("nbClasses").value),
-        heuresParSemaine: parseInt(document.getElementById("heuresParSemaine").value),
-        nbSalles: parseInt(document.getElementById("nbSalles").value),
-        effectifMin: parseInt(document.getElementById("effectifMin").value),
-        effectifMax: parseInt(document.getElementById("effectifMax").value),
-        capaciteMin: parseInt(document.getElementById("capaciteMin").value),
-        capaciteMax: parseInt(document.getElementById("capaciteMax").value),
-        matieresProfs: matieresProfs
-    };
-
-    // Debug log pour vérifier les heures
-    console.log("Données envoyées:", {
-        startHour: data.startHour,
-        endHour: data.endHour,
-        type_start: typeof data.startHour,
-        type_end: typeof data.endHour
-    });
-
-    
-    const jsonData = JSON.stringify(data);
-
-    
-    const res = await fetch("http://127.0.0.1:8000/planning", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: jsonData
-    });
-
-    const result = await res.json();
-    
-    const resultDiv = document.getElementById("result");
-    
-    if (result.error) {
-        resultDiv.innerHTML = `<div class="error">❌ Erreur: ${result.error}</div>`;
-        return;
-    }
-    
-    resultDiv.innerHTML = generatePlanningHTML(result);
-});
+// Debug
+window.debugAppState = () => {
+    console.log("État de l'application:", appState);
+};

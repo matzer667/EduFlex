@@ -20,10 +20,10 @@ class Professeur:
 
 
 class Classe:
-    def __init__(self, nom, effectif, nb_heures_semaine):
+    def __init__(self, nom, effectif, heures_semaine=25):
         self.nom = nom
         self.effectif = effectif
-        self.nb_heures_semaine = nb_heures_semaine
+        self.nb_heures_semaine = heures_semaine  # Nombre de cours par semaine
     
     def __str__(self):
-        return f"{self.nom} ({self.effectif} élèves, {self.nb_heures_semaine}h/sem)"
+        return f"{self.nom} ({self.effectif} élèves, {self.nb_heures_semaine}h/semaine)"

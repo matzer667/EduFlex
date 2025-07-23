@@ -27,19 +27,25 @@ app.add_middleware(
 # MODÈLES PYDANTIC
 # =============================================================================
 
+class EffectifClasse(BaseModel):
+    """Modèle pour l'effectif d'une classe"""
+    effectif: int
+    heures_semaine: int = 25  # Nombre de cours par semaine
+
+class CapaciteSalle(BaseModel):
+    """Modèle pour la capacité d'une salle"""
+    capacite: int
+
 class PlanningRequest(BaseModel):
     """Modèle de requête pour générer un planning"""
     startHour: float
     endHour: float
     nbProfs: int
     nbClasses: int
-    heuresParSemaine: int
     nbSalles: int
-    effectifMin: int
-    effectifMax: int
-    capaciteMin: int
-    capaciteMax: int
     matieresProfs: list[list[str]]
+    effectifsClasses: list[EffectifClasse]
+    capacitesSalles: list[CapaciteSalle]
 
 # =============================================================================
 # ROUTES API
@@ -75,13 +81,10 @@ async def create_planning(data: PlanningRequest):
             data.endHour, 
             data.nbProfs, 
             data.nbClasses,
-            data.heuresParSemaine,
             data.nbSalles,
-            data.effectifMin,
-            data.effectifMax,
-            data.capaciteMin,
-            data.capaciteMax,
-            data.matieresProfs
+            data.matieresProfs,
+            data.effectifsClasses,
+            data.capacitesSalles
         )
         return result
     except ValueError as e:

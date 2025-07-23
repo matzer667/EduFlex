@@ -1,14 +1,15 @@
-# =============================================================================
-# API SERVICE - Interface pour l'API FastAPI
-# =============================================================================
-
 import random
 from models import Salle, Professeur, Classe
 from planning_generator import PlanningGenerator
 
-def generate_planning(start_hour, end_hour, nb_profs, nb_classes, heures_par_semaine, 
-                     nb_salles, effectif_min, effectif_max, capacite_min, capacite_max, 
-                     matieres_profs):
+
+# =============================================================================
+# API SERVICE - Interface pour l'API FastAPI
+# =============================================================================
+
+
+def generate_planning(start_hour, end_hour, nb_profs, nb_classes, 
+                     nb_salles, matieres_profs, effectifs_classes, capacites_salles):
     """
     Service principal pour générer un planning automatique
     
@@ -17,13 +18,10 @@ def generate_planning(start_hour, end_hour, nb_profs, nb_classes, heures_par_sem
         end_hour (float): Heure de fin des cours (ex: 17.75 pour 17h45)
         nb_profs (int): Nombre de professeurs
         nb_classes (int): Nombre de classes
-        heures_par_semaine (int): Heures de cours par semaine par classe
         nb_salles (int): Nombre de salles disponibles
-        effectif_min (int): Effectif minimum d'une classe
-        effectif_max (int): Effectif maximum d'une classe
-        capacite_min (int): Capacité minimum d'une salle
-        capacite_max (int): Capacité maximum d'une salle
         matieres_profs (list): Liste de listes des matières par professeur
+        effectifs_classes (list): Liste des effectifs par classe
+        capacites_salles (list): Liste des capacités par salle
         
     Returns:
         dict: Contenant le planning et les statistiques
@@ -32,31 +30,37 @@ def generate_planning(start_hour, end_hour, nb_profs, nb_classes, heures_par_sem
         ValueError: En cas d'erreur lors de la génération
     """
     try:
-        # Créer le générateur principal
         generator = PlanningGenerator(start_hour, end_hour)
         
-        # Ajouter les professeurs
         for i in range(nb_profs):
             matieres = matieres_profs[i] if i < len(matieres_profs) else ["Matière générale"]
             prof = Professeur(f"Prof_{i+1}", matieres)
             generator.add_professeur(prof)
         
-        # Ajouter les classes
+        # Ajouter les classes avec effectifs individuels
         for i in range(nb_classes):
-            effectif = random.randint(effectif_min, effectif_max)
-            classe = Classe(f"Classe_{i+1}", effectif, heures_par_semaine)
+            if i < len(effectifs_classes):
+                effectif = effectifs_classes[i].effectif
+                heures_semaine = effectifs_classes[i].heures_semaine
+            else:
+                # Valeurs par défaut si pas assez d'effectifs spécifiés
+                effectif = 25
+                heures_semaine = 25
+            
+            classe = Classe(f"Classe_{i+1}", effectif, heures_semaine)
             generator.add_classe(classe)
         
-        # Ajouter les salles
         for i in range(nb_salles):
-            capacite = random.randint(capacite_min, capacite_max)
+            if i < len(capacites_salles):
+                # Utiliser la capacité spécifiée pour cette salle
+                capacite = capacites_salles[i].capacite
+            else:
+                # Valeur par défaut si pas assez de capacités spécifiées
+                capacite = 30
+            
             salle = Salle(f"Salle_{i+1}", capacite)
             generator.add_salle(salle)
-        
-        # Générer le planning
         planning = generator.generate_planning()
-        
-        # Retourner le résultat formaté pour l'API
         return {
             "resume": generator.get_resume(),
             "planning": [
